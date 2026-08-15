@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — QuantumMind</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="admin-shell">
+    <header class="admin-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="logo-dot"></div>
+        <h1 style="margin: 0; font-size: 18px;">QuantumMind Admin</h1>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 13px; color: var(--muted);">{{ username }}</span>
+        <a href="{{ url_for('index') }}" style="color: var(--accent); text-decoration: none; font-size: 12px;">Back to Chat</a>
+        <a href="{{ url_for('logout') }}" style="color: var(--accent); text-decoration: none; font-size: 12px;">Logout</a>
+      </div>
+    </header>
+
+    <!-- Users Panel -->
+    <div class="admin-panel">
+      <h2>👥 All Users ({{ users | length }})</h2>
+      <p class="admin-hint">Monitor user activity, delete accounts (non-admin only).</p>
+
+      {% if users %}
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Joined</th>
+              <th>Last Seen</th>
+              <th>Chats</th>
+              <th>Messages</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+              <tr>
+                <td><strong>{{ u.username }}</strong></td>
+                <td>{{ u.email }}</td>
+                <td>
+                  {% if u.is_admin %}
+                    <span style="color: var(--accent); font-weight: 600;">Admin</span>
+                  {% else %}
+                    User
+                  {% endif %}
+                </td>
+                <td style="font-size: 11px; color: var(--muted);">{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+                <td style="font-size: 11px; color: var(--muted);">
+                  {% set now = now_utc() %}
+                  {% set diff = (now - u.last_seen).total_seconds() %}
+                  {% if diff < 60 %}now{% elif diff < 3600 %}{{ (diff / 60) | int }}m ago{% elif diff < 86400 %}{{ (diff / 3600) | int }}h ago{% else %}{{ (diff / 86400) | int }}d ago{% endif %}
+                </td>
+                <td>{{ u.session_count }}</td>
+                <td>{{ u.message_count }}</td>
+                <td>
+                  {% if not u.is_admin %}
+                    <form method="post" action="{{ url_for('admin_delete_user', user_id=u.id) }}" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="admin-danger-btn" onclick="return confirm('Delete {{ u.username }}? This can\'t be undone.')">Delete</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p style="color: var(--muted); font-size: 13px;">No users yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- Broadcast Panel -->
+    <div class="admin-panel">
+      <h2>📢 Send Announcement</h2>
+      <p class="admin-hint">Send a pop-up message to one user or everyone (appears next time they open the app).</p>
+
+      <form method="post" action="{{ url_for('admin_send_broadcast') }}" class="broadcast-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div>
+          <label class="auth-label">Message</label>
+          <textarea name="message" class="auth-input" placeholder="Type your announcement..." rows="4" required></textarea>
+        </div>
+
+        <div>
+          <label class="auth-label">Target</label>
+          <select name="target" class="auth-input" style="appearance: none; padding-right: 30px;">
+            <option value="all">📡 Everyone</option>
+            {% for u in all_users %}
+              <option value="{{ u.id }}">👤 {{ u.username }}{% if u.email %} ({{ u.email }}){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="auth-btn">Send</button>
+      </form>
+    </div>
+
+    <!-- Recent Broadcasts -->
+    <div class="admin-panel">
+      <h2>📜 Recent Broadcasts</h2>
+      <p class="admin-hint">Last 20 announcements sent.</p>
+
+      {% if broadcasts %}
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          {% for b in broadcasts %}
+            <div style="border-left: 3px solid var(--accent); padding-left: 12px; padding-right: 12px; padding-top: 8px; padding-bottom: 8px; background: var(--panel-2); border-radius: 8px;">
+              <div style="font-size: 12px; color: var(--muted);">
+                {{ b.created_at.strftime('%Y-%m-%d %H:%M') }} · by <strong>{{ b.created_by }}</strong>
+                {% if b.target_user_id %}
+                  · to user ID {{ b.target_user_id }}
+                {% else %}
+                  · to everyone
+                {% endif %}
+              </div>
+              <div style="font-size: 13px; color: var(--text); margin-top: 6px;">{{ b.message }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--muted); font-size: 13px;">No broadcasts yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — QuantumMind</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="auth-shell">
+    <form class="auth-card" method="POST" action="{{ url_for('login_page') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="about-logo-dot"></div>
+      <h2>Welcome back</h2>
+      <p class="about-sub">Sign in to QuantumMind</p>
+      {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
+      <label class="auth-label">Username or Email</label>
+      <input class="auth-input" type="text" name="username" placeholder="Abbasi or your@email.com" required autofocus>
+      <label class="auth-label">Password</label>
+      <input class="auth-input" type="password" name="password" required>
+      <button class="auth-btn" type="submit">Log in</button>
+      <p class="auth-switch">No account? <a href="{{ url_for('register_page') }}">Create one</a></p>
+    </form>
+  </div>
+</body>
+</html>

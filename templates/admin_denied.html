@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access Denied — QuantumMind</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-card" style="text-align: center;">
+      <div class="about-logo-dot" style="margin: 0 auto 20px;"></div>
+      <h2>Access Denied</h2>
+      <p class="about-sub" style="color: var(--danger);">Admin panel restricted</p>
+      <p style="color: var(--muted); margin: 20px 0;">
+        You're logged in as <strong>{{ username }}</strong>,<br>
+        but this area is only for administrators.
+      </p>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <a href="{{ url_for('index') }}" class="auth-btn" style="flex: 1; text-decoration: none; display: inline-block; padding: 11px;">Back to Chat</a>
+      </div>
+      <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="{{ url_for('logout') }}" style="color: var(--accent); text-decoration: none; font-size: 12px;">Logout</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
