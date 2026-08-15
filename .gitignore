@@ -6,3 +6,4 @@ instance/
 *.db
 .DS_Store
 env_fixed.txt
+*.zip 
