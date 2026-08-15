@@ -65,10 +65,15 @@ def get_csrf_token():
 
 @app.context_processor
 def inject_csrf_token():
-    return {
-        "csrf_token": get_csrf_token,
-        "now_utc": datetime.utcnow,
-    }
+    return {"csrf_token": get_csrf_token}
+
+@app.context_processor
+def inject_now_utc():
+    # admin.html calls now_utc() to compute "X minutes/hours ago" for each
+    # user's last-seen time. It was never registered before, which crashed
+    # /admin on every load. Must stay a naive UTC datetime (no timezone) to
+    # match User.last_seen, which is also stored naive via datetime.utcnow().
+    return {"now_utc": datetime.utcnow}
 
 @app.before_request
 def check_csrf():
@@ -625,17 +630,22 @@ def _oracle_from_bitstring(bitstring):
         if bit == "0":
             circuit.x(i)
     if n > 1:
-        circuit.barrier()
         controls = list(range(n - 1))
         target = n - 1
         # QuantumCircuit has no built-in mcz — build a multi-controlled Z
         # by taking a plain ZGate and adding (n-1) control qubits to it.
         circuit.append(ZGate().control(n - 1), controls + [target])
-        circuit.barrier()
+    else:
+        circuit.z(0)
     for i, bit in enumerate(bitstring):
         if bit == "0":
             circuit.x(i)
-    return circuit.to_gate(label="oracle")
+    # Return the QuantumCircuit itself (not .to_gate()) — GroverOperator's
+    # oracle parameter is documented to accept a QuantumCircuit directly.
+    # Converting to a gate first breaks the moment the circuit contains a
+    # barrier (barriers cannot be converted to a gate instruction), which
+    # is exactly what crashed here before.
+    return circuit
 
 ASSISTANT_IDENTITY = """You are QuantumMind, a helpful AI + Quantum assistant built by Muhammad Hozafa Abbasi.
 You are concise, upbeat, and precise. Speak in plain English, never jargon.
